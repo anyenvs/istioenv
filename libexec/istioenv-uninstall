@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Usage: istioenv uninstall <version>
+# Summary: Uninstall the specified version of istio
+
+[ -n "${ISTIOENV_DEBUG}" ] && set -x
+source ${ISTIOENV_ROOT}/libexec/helpers.sh
+
+[ ${#} -gt 1 ] && error_and_die "usage: istioenv uninstall [<version>]"
+
+declare version
+
+if [ -z "${1}" ]; then
+  version_file="$(istioenv-version-file)"
+  if [ "${version_file}" != "${ISTIOENV_ROOT}/version" ];then
+    version="$(cat ${version_file} || true)"
+  fi
+else
+  version="${1}"
+fi
+
+[ -n "${version}" ] || error_and_die "Version is not specified"
+
+dst_path="${ISTIOENV_ROOT}/versions/${version}"
+if [ -f "${dst_path}/istio" ]; then
+  info "Uninstall istio v${version}"
+  rm -r "${dst_path}"
+  info "\033[0;32mistio v${version} is successfully uninstalled\033[0;39m"
+fi

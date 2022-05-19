@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Summary: Explain how the current istio version is set
+set -e
+[ -n "$ISTIOENV_DEBUG" ] && set -x
+
+unset ISTIOENV_VERSION_ORIGIN
+
+if [ -n "$ISTIOENV_VERSION_ORIGIN" ]; then
+  echo "$ISTIOENV_VERSION_ORIGIN"
+elif [ -n "$ISTIOENV_VERSION" ]; then
+  echo "ISTIOENV_VERSION environment variable"
+else
+  istioenv-version-file
+fi

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Summary: Show the current istio version and its origin
+#
+# Shows the currently selected istio version and how it was selected.
+# To obtain only the version string, use `istioenv version-name'.
+
+set -e
+[ -n "$ISTIOENV_DEBUG" ] && set -x
+
+echo "$(istioenv-version-name) (set by $(istioenv-version-origin))"

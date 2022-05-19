@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Usage: istioenv version-file-write <file> <version>
+
+set -e
+[ -n "$ISTIOENV_DEBUG" ] && set -x
+
+ISTIOENV_VERSION_FILE="$1"
+ISTIOENV_VERSION="$2"
+
+if [ -z "$ISTIOENV_VERSION" ] || [ -z "$ISTIOENV_VERSION_FILE" ]; then
+  istioenv-help --usage version-file-write >&2
+  exit 1
+fi
+
+# Make sure the specified version is installed.
+istioenv-bin-path "$ISTIOENV_VERSION" > /dev/null
+
+# Write the version out to disk.
+echo "$ISTIOENV_VERSION" > "$ISTIOENV_VERSION_FILE"

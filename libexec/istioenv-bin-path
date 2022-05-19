@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Summary: Display the directory where istio exists
+# Usage: istioenv bin-path
+#
+# Displays the directory where istio is installed.
+
+set -e
+[ -n "$ISTIOENV_DEBUG" ] && set -x
+
+remove_from_path() {
+  local path_to_remove="$1"
+  local path_before
+  local result=":${PATH//\~/$HOME}:"
+  while [ "$path_before" != "$result" ]; do
+    path_before="$result"
+    result="${result//:$path_to_remove:/:}"
+  done
+  result="${result%:}"
+  echo "${result#:}"
+}
+
+if [ -n "$1" ]; then
+  export ISTIOENV_VERSION="$1"
+elif [ -z "$ISTIOENV_VERSION" ]; then
+  ISTIOENV_VERSION="$(istioenv-version-name)"
+fi
+
+if [ "$ISTIOENV_VERSION" = "system" ]; then
+  SYSTEM_ISTIO_PATH=$(PATH="$(remove_from_path "${ISTIOENV_ROOT}/bin")" command -v istio)
+  if ISTIO_BIN_PATH="${SYSTEM_ISTIO_PATH}"; then
+    ISTIO_BIN_PATH="${SYSTEM_ISTIO_PATH%/*}"
+    echo "${ISTIO_BIN_PATH:-/}"
+    exit
+  else
+    echo "istioenv: system version not found in PATH" >&2
+    exit 1
+  fi
+fi
+
+ISTIOENV_BIN_PATH="${ISTIOENV_ROOT}/versions/${ISTIOENV_VERSION}/bin"
+if [ ! -d "$ISTIOENV_BIN_PATH" ]; then
+  echo "istioenv: version \`${ISTIOENV_VERSION}' is not installed" >&2
+  exit 1
+fi
+
+echo "$ISTIOENV_BIN_PATH"

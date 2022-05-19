@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the global istio version
+#
+# Usage: istioenv global <version>
+#
+# Sets the global istio version. You can override the global version at
+# any time by setting a directory-specific version with `istioenv local'
+# or by setting the `ISTIOENV_VERSION' environment variable.
+#
+# <version> should be a string matching a istio version known to istioenv.
+# The special version string `system' will use your default system istio.
+# Run `istioenv versions' for a list of available istio versions.
+
+set -e
+[ -n "$ISTIOENV_DEBUG" ] && set -x
+
+# Provide istioenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec istioenv-versions --bare
+fi
+
+versions=("$@")
+ISTIOENV_VERSION_FILE="${ISTIOENV_ROOT}/version"
+
+if [ -n "$versions" ]; then
+  istioenv-version-file-write "$ISTIOENV_VERSION_FILE" "${versions[@]}"
+else
+  OLDIFS="$IFS"
+  IFS=: versions=($(
+    istioenv-version-file-read "$ISTIOENV_VERSION_FILE" ||
+    istioenv-version-file-read "${ISTIOENV_ROOT}/global" ||
+    istioenv-version-file-read "${ISTIOENV_ROOT}/default" ||
+    echo system
+  ))
+  IFS="$OLDIFS"
+  for version in "${versions[@]}"; do
+    echo "$version"
+  done
+fi
