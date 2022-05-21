@@ -22,28 +22,32 @@ ISTIO_REPO='https://api.github.com/repos/istio/istio/releases'
 test "$1" == "--list" -o "$1" == "-l" && {
   eval which {wget,curl,jq} &>/dev/null || { echo Please install wget,curl,jq ; exit 0; }
   next="${ISTIO_REPO}?simple=yes&per_page=100&page="
-  page="1"
+  page=0
   while true; do
+    page=$((page + 1))
     versions=$(wget -qO- "${next}${page}" | jq -r '.[].tag_name')
-    echo $versions
-    export next=$(curl -sSLIvk "${next}${page}" 2>&1 | grep -m1 link | sed 's|.*page=\(.*\)>;|\1|g'|xargs -n1 )
-    echo $next
-    page=$(cut -d' ' -f1 <<<$next)
-    grep -q last <<<${next} && break
+    test -n "$versions" || echo "$next$page - Emply Response"
+    test -n "$versions" && { echo $next$page; echo $versions; } || break
   done
   exit 0
 }
 
-dst_path="${ISTIOENV_ROOT}/versions/${version}"
+dst_path="${ISTIOENV_ROOT}/versions/"
 if [ -f "${dst_path}/istio" ]; then
-  echo "istio v${version} is already installed"
+  echo "istio v${version##v} is already installed"
   exit 0
 fi
 
-info "Installing istio v${version}"
+info "Installing istio v${version##v}"
 mkdir -p "${dst_path}" || error_and_die "Failed to make directory ${dst_path}"
 
-( cd ${dst_path} ; wget -qO- https://istio.io/downloadIstio | ${version:+ISTIO_VERSION=$version} TARGET_ARCH=$(uname -m) sh - || error_and_die "Install failed" )
-ln -svnf ${dst_path} $HOME/.istio
+( cd ${dst_path} ; wget -qO- https://istio.io/downloadIstio | ISTIO_VERSION=${version##v} TARGET_ARCH=$(uname -m) sh - || error_and_die "Install failed" )
+test -d "${dst_path}/istio-${version##v}" && mv -fv ${dst_path}istio-${version##v} ${dst_path}${version##v}
+test -d "${dst_path}/${version##v}" && ln -svnf ${dst_path}/${version##v} $HOME/.istio
 
-info "Installation of istio v${version} successful"
+# Autocompletion
+test -f ${ISTIOENV_ROOT}/completions/istioenv.${SHELL##*/} && . ${ISTIOENV_ROOT}/completions/istioenv.${SHELL##*/}
+test -f ${dst_path}${version##v}/tools/istioctl.${SHELL##*/} && cp -fv ${dst_path}${version##v}/tools/istioctl.${SHELL##*/} ${ISTIOENV_ROOT}/completions/
+test -f ${ISTIOENV_ROOT}/completions/istioctl.${SHELL##*/} && . ${ISTIOENV_ROOT}/completions/istioctl.${SHELL##*/}
+
+info "Installation of istio v${version##v} successful"

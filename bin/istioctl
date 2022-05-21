@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$ISTIOENV_DEBUG" ] && set -x
+
+exec "$(dirname `which $0`)/../bin/istioenv" exec istioctl "$@"
